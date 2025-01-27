@@ -50,19 +50,19 @@ double :: (Num a) => a -> a
 {-# SPECIALISE double :: Natural -> Natural #-}
 double !x = x * x
 
-naturalCountLeadingZeros :: Natural -> Maybe Word
-{-# INLINE naturalCountLeadingZeros #-}
-naturalCountLeadingZeros n =
-    case naturalCountLeadingZeros# n of
+naturalCountTrailingZeros :: Natural -> Maybe Word
+{-# INLINE naturalCountTrailingZeros #-}
+naturalCountTrailingZeros n =
+    case naturalCountTrailingZeros# n of
         (# (#  #) | #) -> Nothing
         (# | w# #)     -> Just (W# w#)
 
-naturalCountLeadingZeros# :: Natural -> (# (#  #) | Word# #)
-{-# INLINE naturalCountLeadingZeros# #-}
-naturalCountLeadingZeros# (NS w#)
+naturalCountTrailingZeros# :: Natural -> (# (#  #) | Word# #)
+{-# INLINE naturalCountTrailingZeros# #-}
+naturalCountTrailingZeros# (NS w#)
     | isTrue# (w# `eqWord#` 0##) = (# (#  #) | #)
     | otherwise = (# | ctz# w# #)
-naturalCountLeadingZeros# (NB bignat#) =
+naturalCountTrailingZeros# (NB bignat#) =
     let
         size# = bigNatSize# bignat#
 
@@ -125,7 +125,7 @@ factor2Nat !n = case factor2Nat# n of
 
 factor2Nat# :: Natural -> (# Word#, Natural #)
 {-# INLINE factor2Nat# #-}
-factor2Nat# !n = case naturalCountLeadingZeros# n of
+factor2Nat# !n = case naturalCountTrailingZeros# n of
     (# (#  #) | #) -> (# 0##, n #)
     (# | s# #)     -> (# s# , naturalShiftR# n s# #)
 
