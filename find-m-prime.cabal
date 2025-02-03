@@ -66,6 +66,7 @@ executable find-m-prime
     -- Other library packages from which modules are imported.
     build-depends:    base      ^>= 4.20.0.0
                     , vector    ==  0.13.*
+                    , repa      ==  3.4.*
                     , deepseq   ==  1.5.*
                     , parallel  ==  3.2.*
                     , time      ==  1.14.*
@@ -79,7 +80,7 @@ executable find-m-prime
 
     -- Base language which the package is written in.
     default-language: GHC2021
-    ghc-options: -O3 -threaded +RTS -N -RTS
+    ghc-options: -O3 -threaded -rtsopts -funfolding-use-threshold1000 -optlo-O3
 
 benchmark bench-miller-rabin
     type:               exitcode-stdio-1.0
