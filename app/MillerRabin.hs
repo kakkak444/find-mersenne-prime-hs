@@ -211,12 +211,19 @@ parCheckNat !bufLen xs !n = foldl' (&&) True $ withStrategy strat go
     go = map (millerNat n) xs
     strat = parBuffer bufLen rseq
 
+takeLessThan :: (Ord a) => a -> [a] -> [a]
+{-# INLINE takeLessThan #-}
+{-# SPECIALISE takeLessThan :: Integer -> [Integer] -> [Integer] #-}
+{-# SPECIALISE takeLessThan :: Natural -> [Natural] -> [Natural] #-}
+{-# SPECIALISE takeLessThan :: Word    -> [Word]    -> [Word]    #-}
+takeLessThan n xs = filter (< n) xs
+
 millerTest :: Integer -> Bool
 {-# INLINE millerTest #-}
 millerTest n
-    | n < 4759123141 = checkV [2, 7, 61] n
-    | n < 341550071728321 = checkV [2, 3, 5, 7, 11, 13, 17] n
-    | n < 18446744073709551615 = checkV [2, 325, 9375, 28178, 450775, 9780504, 1795265022] n
+    | n < 4759123141 = checkV (takeLessThan n [2, 7, 61]) n
+    | n < 341550071728321 = checkV (takeLessThan n [2, 3, 5, 7, 11, 13, 17]) n
+    | n < 18446744073709551615 = checkV (takeLessThan n [2, 325, 9375, 28178, 450775, 9780504, 1795265022]) n
     | otherwise =
         let !maxElem = min (n - 1) $! truncate (3 * double (log $! fromInteger n) :: Double)
         in
@@ -233,16 +240,16 @@ millerTestNat n =
 millerTestWord :: Word -> Bool
 {-# INLINE millerTestWord #-}
 millerTestWord n
-    | n < 4759123141 = checkWord [2, 7, 61] n
-    | n < 341550071728321 = checkWord [2, 3, 5, 7, 11, 13, 17] n
-    | otherwise = checkWord [2, 325, 9375, 28178, 450775, 9780504, 1795265022] n
+    | n < 4759123141 = checkWord (takeLessThan n [2, 7, 61]) n
+    | n < 341550071728321 = checkWord (takeLessThan n [2, 3, 5, 7, 11, 13, 17]) n
+    | otherwise = checkWord (takeLessThan n [2, 325, 9375, 28178, 450775, 9780504, 1795265022]) n
 
 parMillerTest :: Integer -> Bool
 {-# INLINE parMillerTest #-}
 parMillerTest n
-    | n < 4759123141 = checkV [2, 7, 61] n
-    | n < 341550071728321 = checkV [2, 3, 5, 7, 11, 13, 17] n
-    | n < 18446744073709551615 = checkV [2, 325, 9375, 28178, 450775, 9780504, 1795265022] n
+    | n < 4759123141 = checkV (takeLessThan n [2, 7, 61]) n
+    | n < 341550071728321 = checkV (takeLessThan n [2, 3, 5, 7, 11, 13, 17]) n
+    | n < 18446744073709551615 = checkV (takeLessThan n [2, 325, 9375, 28178, 450775, 9780504, 1795265022]) n
     | otherwise =
         let !maxElem = min (n - 1) $! truncate (3 * double (log $! fromInteger n) :: Double)
             !bufLen  = 1000
@@ -252,9 +259,9 @@ parMillerTest n
 parMillerTestNat :: Natural -> Bool
 {-# INLINE parMillerTestNat #-}
 parMillerTestNat n
-    | n < 4759123141 = checkNat [2, 7, 61] n
-    | n < 341550071728321 = checkNat [2, 3, 5, 7, 11, 13, 17] n
-    | n < 18446744073709551615 = checkNat [2, 325, 9375, 28178, 450775, 9780504, 1795265022] n
+    | n < 4759123141 = checkNat (takeLessThan n [2, 7, 61]) n
+    | n < 341550071728321 = checkNat (takeLessThan n [2, 3, 5, 7, 11, 13, 17]) n
+    | n < 18446744073709551615 = checkNat (takeLessThan n [2, 325, 9375, 28178, 450775, 9780504, 1795265022]) n
     | otherwise =
         let !maxElem = min (n - 1) $! truncate (3 * double (log $! fromIntegral n) :: Double)
             !bufLen  = 1000
