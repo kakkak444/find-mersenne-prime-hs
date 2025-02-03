@@ -4,40 +4,42 @@ module Main
     ( main
     ) where
 
-import Numeric.Natural (Natural)
+import Control.Monad (when)
+import Data.Bool     (bool)
 
 import MillerRabin
 import LucasLehmer
 
 import Data.Time.Clock
+import qualified Data.Array.Repa       as R
+import qualified Data.Array.Repa.Repr.HintInterleave as R (hintInterleave)
+import qualified Data.Vector.Unboxed   as V
 
-testCase :: Integral a => a
-{-# SPECIALISE testCase :: Integer #-}
-{-# SPECIALISE testCase :: Natural #-}
-testCase = 2 ^ (521 :: Word) - 1
+chunk :: Int
+chunk = 2000
 
 main :: IO ()
--- main = do
---     putStrLn "input number"
---     n <- read <$> getLine
---     print $ millerTest n
-main = do
-    putStrLn "start measure:"
+main = go 3
 
-    start <- getCurrentTime
-    -- let !m = parMillerTest $ toInteger testCase
-    let !m = millerTestNat testCase
-    -- let !m = millerTest testCase
-    end <- getCurrentTime
+go :: Word -> IO ()
+{-# INLINE go #-}
+go !begin = do
+    let !arr = R.fromListUnboxed (R.Z R.:. chunk) $ take chunk $ filter millerTestWord [begin,begin+2..]
+        !end = arr R.! ( R.Z R.:. (chunk - 1) )
 
-    s1 <- getCurrentTime
-    let !m1 = lucasLehmerTestFast# 521##
-    e1 <- getCurrentTime
+    putStrLn $ "searching [" <> show begin <> "," <> show end <> "] ...:"
+    !startTime <- getCurrentTime
+    !res <- R.computeUnboxedP $ R.hintInterleave $ R.map lucasLehmerTestFast arr
+    !endTime <- getCurrentTime
 
-    putStrLn $ "millerRabin"
-    putStrLn $ "result: " <> show m
-    putStrLn $ "elapsed: " <> show (diffUTCTime end start)
+    putStrLn "result:"
+    V.mapM_ (\(!(!n, !b)) -> when b (putStr $ show n <> ", ")) $ V.zip (R.toUnboxed arr) (R.toUnboxed res)
+    putChar '\n'
 
-    putStrLn $ "lucasLehmer"
-    putStrLn $ "result: " <> show m1
-    putStrLn $ "elapsed: " <> show (diffUTCTime e1 s1)
+    putStrLn $ "found " <> show (R.sumAllS $ R.map (bool 0 1) res :: Int) <> " MPrimes"
+
+    putChar '\n'
+    putStrLn $ "elapsed: " <> show (diffUTCTime endTime startTime)
+    putChar '\n'
+
+    go (end + 2)
